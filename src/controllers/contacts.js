@@ -12,7 +12,13 @@ import { parseSortParams } from '../utils/parseSortParams.js';
 export async function getContactsController(req, res) {
   const { page, perPage } = parsePaginationParams(req.query);
   const { sortBy, sortOrder } = parseSortParams(req.query);
-  const contacts = await getAllContacts({ page, perPage, sortBy, sortOrder });
+  const contacts = await getAllContacts({
+    page,
+    perPage,
+    sortBy,
+    sortOrder,
+    userId: req.user._id,
+  });
   res.json({
     status: 200,
     message: 'Successfully found contacts!',
@@ -22,7 +28,7 @@ export async function getContactsController(req, res) {
 
 export const getContactByIdController = async (req, res, next) => {
   const { contactId } = req.params;
-  const contact = await getContactById(contactId);
+  const contact = await getContactById(contactId, req.user._id);
   if (contact) {
     return res.json({
       status: 200,
@@ -34,7 +40,7 @@ export const getContactByIdController = async (req, res, next) => {
 };
 
 export const createContactController = async (req, res) => {
-  const contacts = await createContact(req.body);
+  const contacts = await createContact({ ...req.body, userId: req.user._id });
   res.status(201).json({
     status: 201,
     message: 'Successfully created a contact!',
@@ -44,7 +50,7 @@ export const createContactController = async (req, res) => {
 
 export const updateContactByIdController = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await updateContactById(contactId, req.body);
+  const contact = await updateContactById(contactId, req.user._id, req.body);
   if (!contact) {
     throw createHttpError(404, 'Contact not found');
   }
@@ -57,7 +63,7 @@ export const updateContactByIdController = async (req, res) => {
 
 export const deleteContactByIdController = async (req, res) => {
   const { contactId } = req.params;
-  const contact = await deleteContactById(contactId);
+  const contact = await deleteContactById(contactId, req.user._id);
   if (!contact) {
     throw createHttpError(404, 'Contact not found');
   }
