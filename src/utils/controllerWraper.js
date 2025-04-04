@@ -1,4 +1,4 @@
-export const controllerWraper = (controller) => {
+export const controllerWrapper = (controller) => {
   return async (req, res, next) => {
     try {
       await controller(req, res, next);
