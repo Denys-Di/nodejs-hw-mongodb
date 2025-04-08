@@ -43,17 +43,29 @@ export const userRegister = async (user) => {
 
 export const loginUser = async (credentials) => {
   const user = await UsersCollection.findOne({ email: credentials.email });
-  if (!user) throw createHttpError(401, 'Unauthorized');
+
+ 
+  if (!user || !user._id) {
+    throw createHttpError(401, 'Invalid email or password');
+  }
 
   const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-  if (!isPasswordValid) throw createHttpError(401, 'Unauthorized');
+  if (!isPasswordValid) {
+    throw createHttpError(401, 'Invalid email or password');
+  }
 
-  await SessionsCollection.deleteOne({ user_id: user._id }); // очищає стару сесію
+ 
+  await SessionsCollection.deleteMany({ user_id: user._id });
 
-  return await SessionsCollection.create({
+ 
+  const tokens = createSessionTokens();
+
+  const session = await SessionsCollection.create({
     user_id: user._id,
-    ...createSessionTokens(),
+    ...tokens,
   });
+
+  return session;
 };
 
 export const refreshSession = async (sessionId, refreshToken) => {
